@@ -35,61 +35,27 @@ fn compare_gff_attributes(
     mode: u8,
     result: &mut json::JsonValue,
 ) {
+    // Does attrs have that key at all?
     if !attrs.contains_key(key) {
-        if mode == 0 {
-            // key from old file is not in new file, remove
-            for value in values {
-                result["changes"].push(object! { "action" => "remove_attribute","tag"=>0 , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
-            }
-        } else {
-            // key from new file is not in old file, add
-            for value in values {
-                result["changes"].push(object! { "action" => "add_attribute","tag"=>0 , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
-            }
+        for value in values {
+            result["changes"].push(object! { "action" => (if mode == 0 { "remove" } else { "add" }) , "what" => "attribute" , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
         }
         return;
     }
 
-    for (key2, values2) in attrs {
-        if key != key2 {
-            continue;
-        }
-        for value2 in values2 {
-            let mut found: bool = false;
-            for value in values {
-                if value == value2 {
-                    found = true;
-                }
-            }
-            if found {
-                continue;
-            }
-            if mode == 0 {
-                // value2 is in the new but not in the old
-                result["changes"].push(object! { "action" => "add_attribute","tag"=>1 , "id" => id.as_str() , "key"=>key.to_string() , "value" => value2.to_string() }).unwrap();
-            } else {
-                // value2 is in the old but not in the new
-                result["changes"].push(object! { "action" => "remove_attribute","tag"=>1 , "id" => id.as_str() , "key"=>key.to_string() , "value" => value2.to_string() }).unwrap();
-            }
-        }
+    // attrs has the key, compare values
+    let values2 = attrs.get_vec(key).unwrap();
 
+    for value2 in values2 {
+        if !values.contains(&value2) {
+            result["changes"].push(object! { "action" => if mode == 0 {"add"} else { "remove" } , "what" => "attribute" , "id" => id.as_str() , "key"=>key.to_string() , "value" => value2.to_string() }).unwrap();
+        }
+    }
+
+    if mode == 1 {
         for value in values {
-            let mut found: bool = false;
-            for value2 in values2 {
-                if value == value2 {
-                    found = true;
-                }
-            }
-            if found {
-                continue;
-            }
-            if mode == 0 {
-                // value is in the old but not in the new
-                // HAD THAT?
-                //                result["changes"].push(object! { "action" => "remove_attribute","tag"=>2 , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
-            } else {
-                // value is in the new but not in the old
-                result["changes"].push(object! { "action" => "add_attribute","tag"=>2 , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
+            if !values2.contains(&value) {
+                result["changes"].push(object! { "action" => "add", "what" => "attribute" , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
             }
         }
     }
@@ -108,40 +74,23 @@ pub fn compare_gff(
             }
             let r2 = data2[id].clone();
             if r1.seqname() != r2.seqname() {
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "seqname" , "value" => r2.seqname() })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "seqname" , "value" => r2.seqname() }).unwrap();
             }
             if r1.source() != r2.source() {
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "source" , "value" => r2.source() })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "source" , "value" => r2.source() }).unwrap();
             }
-
             if r1.feature_type() != r2.feature_type() {
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "feature_type" , "value" => r2.feature_type() })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "feature_type" , "value" => r2.feature_type() }).unwrap();
             }
-
             if r1.start() != r2.start() {
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "start" , "value" => r2.start().to_string() })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "start" , "value" => r2.start().to_string() }).unwrap();
             }
-
             if r1.end() != r2.end() {
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "end" , "value" => r2.end().to_string() })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "end" , "value" => r2.end().to_string() }).unwrap();
             }
-
             if r1.score() != r2.score() {
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "score" , "value" => r2.score() })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "score" , "value" => r2.score() }).unwrap();
             }
-
             if r1.strand() != r2.strand() {
                 let mut strand: String;
                 strand = ".".to_string();
@@ -149,15 +98,10 @@ pub fn compare_gff(
                 if s.is_some() {
                     strand = s.unwrap().strand_symbol().to_string();
                 }
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "strand" , "value" => strand })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "strand" , "value" => strand }).unwrap();
             }
-
             if r1.frame() != r2.frame() {
-                result["changes"]
-                    .push(object! { "action" => "alter" , "id" => id.as_str() , "key" => "frame" , "value" => r2.frame() })
-                    .unwrap();
+                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "frame" , "value" => r2.frame() }).unwrap();
             }
 
             let r1a = r1.attributes();
@@ -170,17 +114,33 @@ pub fn compare_gff(
                 compare_gff_attributes(id, key, value, r1a, 1, result);
             }
         } else {
-            if mode == 0 {
-                result["changes"]
-                    .push(object! { "action" => "remove" , "id" => id.as_str()})
-                    .unwrap();
-            } else {
-                let mut data = json::JsonValue::new_object();
-                let s = serde_json::to_string(r1).unwrap();
-                data["action"] = "add".into();
-                data["id"] = id.as_str().into();
-                data["data"] = s.into();
-            }
+            let mut o = object! {"what"=>"row" , "action"=> if mode==0 {"remove"} else {"add"} , "id"=>id.as_str() };
+            let s = serde_json::to_string(r1).unwrap();
+            o["data"] = json::parse(s.as_str()).unwrap();
+            result["changes"].push(o).unwrap();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn attribute_added() {
+        let id: String = "the_id".to_string();
+        let key: String = "the_key".to_string();
+        let values = vec!["value1".to_string(), "value3".to_string()];
+        let mut attrs = MultiMap::new();
+        let mut result = object! {"changes"=>array![]};
+
+        attrs.insert("the_key".to_string(), "value1".to_string());
+        attrs.insert("the_key".to_string(), "value2".to_string());
+        attrs.insert("the_key".to_string(), "value3".to_string());
+
+        compare_gff_attributes(&id, &key, &values, &attrs, 0, &mut result);
+
+        let expected = object! { "changes" => array! [ object! { "action" => "add_attribute", "id" => id , "key"=>key , "value" => "value2" } ] };
+        assert_eq!(result, expected);
     }
 }
