@@ -1,3 +1,7 @@
+extern crate bio;
+#[macro_use]
+extern crate json;
+
 use bio::io::gff;
 use multimap::MultiMap;
 use serde_json;
