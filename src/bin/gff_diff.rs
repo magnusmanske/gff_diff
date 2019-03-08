@@ -28,7 +28,12 @@ fn diff_files(file1: String, file2: String) -> json::JsonValue {
     //        println!("{:#}", stringify_pretty(result, 2));
 }
 
-fn apollo_diff(_full_gff: String, _apollo_gff: String) -> json::JsonValue {
+fn apollo_diff(full_gff: String, apollo_gff: String) -> json::JsonValue {
+    let mut full = HashMap::new();
+    gff_diff::read_gff_into_data(full_gff, &mut full);
+    let mut apollo = HashMap::new();
+    gff_diff::read_gff_into_data(apollo_gff, &mut apollo);
+    dbg!(&apollo);
     let result = object! {
         "changes" => array![]
     };
