@@ -1,33 +1,39 @@
 extern crate bio;
 #[macro_use]
-extern crate json;
+extern crate serde_json;
 
 use bio::io::gff;
 use multimap::MultiMap;
-use serde_json;
+use serde_json::value::Value;
+
 use std::fs::File;
 
 pub fn read_gff_into_data(
     filename: String,
     data: &mut std::collections::HashMap<std::string::String, bio::io::gff::Record>,
 ) {
-    let file = File::open(filename).unwrap();
+    let file = File::open(&filename).unwrap();
     let mut reader = gff::Reader::new(file, gff::GffType::GFF3);
 
     for element in reader.records() {
         if !element.is_ok() {
             continue;
         }
-        let e = element.unwrap();
+        let mut e = element.unwrap();
         if !e.attributes().contains_key("ID") {
             continue;
         }
         let id = e.attributes()["ID"].clone();
         if data.contains_key(&id) {
-            println!("{:?}", id);
+            println!("Double ID: {:?}", id);
+            let _attrs = e.attributes_mut();
+            //attrs["ID"] = "xxxx".to_string(); // TODO FIXME
             continue;
         }
         data.insert(id, e);
+    }
+    if data.is_empty() {
+        panic!("Empty file or no gff file: {}", filename)
     }
 }
 
@@ -37,12 +43,17 @@ fn compare_gff_attributes(
     values: &Vec<String>,
     attrs: &MultiMap<String, String>,
     mode: u8,
-    result: &mut json::JsonValue,
+    result: &mut Value,
 ) {
     // Does attrs have that key at all?
     if !attrs.contains_key(key) {
         for value in values {
-            result["changes"].push(object! { "action" => (if mode == 0 { "remove" } else { "add" }) , "what" => "attribute" , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
+            let action = match mode {
+                0 => "remove",
+                _ => "add",
+            };
+            let j = json!( {"action" : action , "what": "attribute" , "id" : id.as_str() , "key":key.to_string() , "value" : value.to_string() } );
+            result["changes"].as_array_mut().unwrap().push(j);
         }
         return;
     }
@@ -52,14 +63,20 @@ fn compare_gff_attributes(
 
     for value2 in values2 {
         if !values.contains(&value2) {
-            result["changes"].push(object! { "action" => if mode == 0 {"add"} else { "remove" } , "what" => "attribute" , "id" => id.as_str() , "key"=>key.to_string() , "value" => value2.to_string() }).unwrap();
+            let action = match mode {
+                0 => "add",
+                _ => "remove",
+            };
+            let j = json!({ "action" : action , "what" : "attribute" , "id" : id.as_str() , "key":key.to_string() , "value" : value2.to_string() } );
+            result["changes"].as_array_mut().unwrap().push(j);
         }
     }
 
     if mode == 1 {
         for value in values {
             if !values2.contains(&value) {
-                result["changes"].push(object! { "action" => "add", "what" => "attribute" , "id" => id.as_str() , "key"=>key.to_string() , "value" => value.to_string() }).unwrap();
+                let j = json!({"action" : "add", "what" : "attribute" , "id" : id.as_str() , "key":key.to_string() , "value" : value.to_string() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
         }
     }
@@ -69,7 +86,7 @@ pub fn compare_gff(
     data1: &std::collections::HashMap<std::string::String, bio::io::gff::Record>,
     data2: &std::collections::HashMap<std::string::String, bio::io::gff::Record>,
     mode: u8,
-    result: &mut json::JsonValue,
+    result: &mut Value,
 ) {
     for (id, r1) in data1 {
         if data2.contains_key(id) {
@@ -78,22 +95,28 @@ pub fn compare_gff(
             }
             let r2 = data2[id].clone();
             if r1.seqname() != r2.seqname() {
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "seqname" , "value" => r2.seqname() }).unwrap();
+                let j = json!({ "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "seqname" , "value" : r2.seqname() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
             if r1.source() != r2.source() {
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "source" , "value" => r2.source() }).unwrap();
+                let j = json!( { "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "source" , "value" : r2.source() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
             if r1.feature_type() != r2.feature_type() {
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "feature_type" , "value" => r2.feature_type() }).unwrap();
+                let j = json!( { "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "feature_type" , "value" : r2.feature_type() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
             if r1.start() != r2.start() {
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "start" , "value" => r2.start().to_string() }).unwrap();
+                let j = json!( { "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "start" , "value" : r2.start().to_string() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
             if r1.end() != r2.end() {
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "end" , "value" => r2.end().to_string() }).unwrap();
+                let j = json!( { "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "end" , "value" : r2.end().to_string() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
             if r1.score() != r2.score() {
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "score" , "value" => r2.score() }).unwrap();
+                let j = json!( { "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "score" , "value" : r2.score() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
             if r1.strand() != r2.strand() {
                 let mut strand: String;
@@ -102,10 +125,12 @@ pub fn compare_gff(
                 if s.is_some() {
                     strand = s.unwrap().strand_symbol().to_string();
                 }
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "strand" , "value" => strand }).unwrap();
+                let j = json!( { "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "strand" , "value" : strand });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
             if r1.frame() != r2.frame() {
-                result["changes"].push(object! { "action" => "update" , "what" => "row" , "id" => id.as_str() , "key" => "frame" , "value" => r2.frame() }).unwrap();
+                let j = json!( { "action" : "update" , "what" : "row" , "id" : id.as_str() , "key" : "frame" , "value" : r2.frame() });
+                result["changes"].as_array_mut().unwrap().push(j);
             }
 
             let r1a = r1.attributes();
@@ -118,10 +143,10 @@ pub fn compare_gff(
                 compare_gff_attributes(id, key, value, r1a, 1, result);
             }
         } else {
-            let mut o = object! {"what"=>"row" , "action"=> if mode==0 {"remove"} else {"add"} , "id"=>id.as_str() };
+            let mut o = json! ({"what":"row" , "action": if mode==0 {"remove"} else {"add"} , "id":id.as_str() });
             let s = serde_json::to_string(r1).unwrap();
-            o["data"] = json::parse(s.as_str()).unwrap();
-            result["changes"].push(o).unwrap();
+            o["data"] = json!(s);
+            result["changes"].as_array_mut().unwrap().push(o);
         }
     }
 }
@@ -136,7 +161,7 @@ mod tests {
         let key: String = "the_key".to_string();
         let values = vec!["value1".to_string(), "value3".to_string()];
         let mut attrs = MultiMap::new();
-        let mut result = object! {"changes"=>array![]};
+        let mut result = json! ({"changes":[]});
 
         attrs.insert("the_key".to_string(), "value1".to_string());
         attrs.insert("the_key".to_string(), "value2".to_string());
@@ -144,7 +169,7 @@ mod tests {
 
         compare_gff_attributes(&id, &key, &values, &attrs, 0, &mut result);
 
-        let expected = object! { "changes" => array! [ object! { "action" => "add_attribute", "id" => id , "key"=>key , "value" => "value2" } ] };
+        let expected = json! ({ "changes" : [ { "action" : "add", "what": "attribute", "id" : id , "key":key , "value" : "value2" } ] });
         assert_eq!(result, expected);
     }
 }
