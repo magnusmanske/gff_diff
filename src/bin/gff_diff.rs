@@ -7,7 +7,7 @@ use std::env;
 use std::io::{self};
 
 fn get_usage(program: &str, opts: Options) -> String {
-    let brief = format!("Usage: {} FILE [options]", program);
+    let brief = format!("Usage: {} [options] FILE FILE2", program);
     format!("{}", opts.usage(&brief))
 }
 
@@ -16,7 +16,7 @@ fn main() {
     let program = args[0].clone();
 
     let mut opts = Options::new();
-    opts.optopt("a", "apollo", "apollo output GFF", "APOLLO");
+    opts.optflag("a", "apollo", "Second file is Apollo-style GFF");
     opts.optflag("d", "diff", "output diff");
     opts.optflag("x", "apply", "apply diff");
     opts.optflag("h", "help", "print this help menu");
@@ -30,23 +30,18 @@ fn main() {
     }
     let do_diff = matches.opt_present("d");
     let do_apply = matches.opt_present("x");
-    let apollo = matches.opt_str("a");
+    let apollo = matches.opt_present("a");
     let files: Vec<String> = matches.free;
 
-    let mut cg = CompareGFF::new();
-    let diff = match files.len() {
-        1 => match apollo {
-            Some(apollo_file) => {
-                cg = CompareGFF::new_from_files(&files[0], &apollo_file).unwrap();
-                cg.diff_apollo()
-            }
-            None => Err(From::from(get_usage(&program, opts))),
-        },
-        2 => {
-            cg = CompareGFF::new_from_files(&files[0], &files[1]).unwrap();
-            cg.diff()
-        }
-        _ => Err(From::from(get_usage(&program, opts))),
+    if files.len() != 2 {
+        println!("{}", get_usage(&program, opts));
+        return;
+    }
+
+    let mut cg = CompareGFF::new_from_files(&files[0], &files[1]).unwrap();
+    let diff = match apollo {
+        true => cg.diff_apollo(),
+        false => cg.diff(),
     };
     match diff {
         Ok(diff) => match (do_diff, do_apply) {

@@ -62,7 +62,7 @@ impl CompareGFF {
         Ok(diff)
     }
 
-    pub fn read(&self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
+    fn read(&self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
         let mut ret: HashMap<String, bio::io::gff::Record> = HashMap::new();
         let mut reader = gff::Reader::new(file, gff::GffType::GFF3);
 
@@ -92,11 +92,7 @@ impl CompareGFF {
         Ok(ret)
     }
 
-    pub fn write(
-        &self,
-        file: Box<dyn std::io::Write>,
-        data: &HashGFF,
-    ) -> Result<(), Box<dyn Error>> {
+    fn write(&self, file: Box<dyn std::io::Write>, data: &HashGFF) -> Result<(), Box<dyn Error>> {
         let mut writer = gff::Writer::new(file, gff::GffType::GFF3);
         for (_k, v) in data {
             writer.write(v)?;
