@@ -19,6 +19,7 @@ fn main() {
     opts.optflag("a", "apollo", "Second file is Apollo-style GFF");
     opts.optflag("d", "diff", "output diff");
     opts.optflag("x", "apply", "apply diff");
+    opts.optflag("i", "issues", "record issues");
     opts.optflag("h", "help", "print this help menu");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -29,6 +30,7 @@ fn main() {
         return;
     }
     let do_diff = matches.opt_present("d");
+    let do_record_issues = matches.opt_present("i");
     let do_apply = matches.opt_present("x");
     let apollo = matches.opt_present("a");
     let files: Vec<String> = matches.free;
@@ -39,6 +41,7 @@ fn main() {
     }
 
     let mut cg = CompareGFF::new_from_files(&files[0], &files[1]).unwrap();
+    cg.record_issues(do_record_issues);
     let diff = match apollo {
         true => cg.diff_apollo(),
         false => cg.diff(),

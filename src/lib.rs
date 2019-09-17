@@ -15,6 +15,7 @@ type HashGFF = HashMap<String, bio::io::gff::Record>;
 pub struct CompareGFF {
     data1: Option<HashGFF>,
     data2: Option<HashGFF>,
+    record_issues: bool,
 }
 
 impl CompareGFF {
@@ -22,7 +23,12 @@ impl CompareGFF {
         Self {
             data1: None,
             data2: None,
+            record_issues: false,
         }
+    }
+
+    pub fn record_issues(&mut self, do_record: bool) {
+        self.record_issues = do_record;
     }
 
     pub fn new_from_files(filename1: &String, filename2: &String) -> Result<Self, Box<dyn Error>> {
@@ -339,8 +345,10 @@ impl CompareGFF {
                 .for_each(|change| changes.push(change));
         }
 
-        let diff = json!({"changes": changes, "issues": issues});
-        Ok(diff)
+        Ok(match self.record_issues {
+            true => json!({"changes": changes, "issues": issues}),
+            false => json!({ "changes": changes }),
+        })
     }
 
     pub fn apply_diff(&mut self, diff: &Value) -> Result<&HashGFF, Box<dyn Error>> {
