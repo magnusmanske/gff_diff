@@ -7,6 +7,7 @@ use multimap::MultiMap;
 use regex::Regex;
 use serde_json::value::Value;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
 
@@ -38,16 +39,6 @@ impl CompareGFF {
         Ok(ret)
     }
 
-    /*
-    pub fn data1(&self) -> &Option<HashGFF> {
-        &self.data1
-    }
-
-    pub fn data2(&self) -> &Option<HashGFF> {
-        &self.data2
-    }
-    */
-
     pub fn diff(&self) -> Result<Value, Box<dyn Error>> {
         let mut result = json!( {
             "changes" :[]
@@ -58,14 +49,7 @@ impl CompareGFF {
     }
 
     pub fn diff_apollo(&self) -> Result<Value, Box<dyn Error>> {
-        let diff = self.compare_apollo()?;
-        //cg.apply_diff(&mut full, &diff); // TODO FIXME
-
-        //let file = File::create(filename)?;
-        // io::stdout()
-        //cg.write(Box::new(io::stdout()), &full)?; // TODO FIXME
-
-        Ok(diff)
+        self.compare_apollo()
     }
 
     fn read(&self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
@@ -241,6 +225,100 @@ impl CompareGFF {
         Ok(())
     }
 
+    fn get_root_parent_id(
+        &self,
+        data: &HashGFF,
+        id: &String,
+        seen: Option<HashSet<String>>,
+    ) -> Option<String> {
+        let mut seen: HashSet<String> = seen.unwrap_or(HashSet::new());
+        if seen.contains(id) {
+            return None; // circular ID chain, oh no
+        }
+        seen.insert(id.to_string());
+        match data.get(id) {
+            Some(element) => match element.attributes().get("Parent") {
+                Some(parent_id) => self.get_root_parent_id(data, parent_id, Some(seen)),
+                None => Some(id.to_string()),
+            },
+            None => None,
+        }
+    }
+
+    fn infer_original_id_from_apollo(
+        &self,
+        data1: &HashGFF,
+        data2: &HashGFF,
+        apollo_element: &bio::io::gff::Record,
+        issues: &mut Vec<String>,
+    ) -> Option<String> {
+        // Try orig_id
+        match apollo_element.attributes().get("orig_id") {
+            Some(orig_id) => {
+                return match data1.get(orig_id) {
+                    Some(_) => Some(orig_id.to_string()),
+                    None => {
+                        issues.push(format!(
+                            "Original ID '{}' given in Apollo GFF is not in full dataset!",
+                            orig_id
+                        ));
+                        None
+                    }
+                }
+            }
+            None => {}
+        }
+
+        // Find Apollo parent
+        let apollo_id = apollo_element.attributes().get("ID")?;
+        let apollo_parent_id = self.get_root_parent_id(data2, apollo_id, None)?;
+        //let apollo_parent_element = data2.get(&apollo_parent_id)?;
+
+        // Find any other Apollo element with that parent and an orig_id
+        let some_apollo_parent_id = Some(apollo_parent_id.to_owned());
+        let orig_parent_id = data2
+            .iter()
+            .filter(|(id, _element)| {
+                self.get_root_parent_id(data2, id, None) == some_apollo_parent_id
+            }) // Same Apollo parent
+            .filter_map(|(_id, element)| element.attributes().get("orig_id")) // with orig_id
+            .map(|s| s.to_string())
+            .filter(|orig_id| data1.contains_key(orig_id)) // with orig_id that exists in original dataset
+            .filter_map(|orig_id| self.get_root_parent_id(data1, &orig_id, None)) // get that original root parent
+            .nth(0)?;
+
+        // Get all (sub)children on that parent in the original
+        let some_orig_parent_id = Some(orig_parent_id);
+        let all_children_orig: HashGFF = data1
+            .iter()
+            .filter(|(_id, data)| data.seqname() == apollo_element.seqname()) // Same chromosome
+            .filter(|(id, _data)| self.get_root_parent_id(data1, id, None) == some_orig_parent_id) // Same root parent
+            .map(|(id, data)| (id.to_owned(), data.to_owned()))
+            .collect();
+
+        // Try original elements with that parent, of the same type
+        let same_type: HashGFF = all_children_orig
+            .iter()
+            .filter(|(_id, data)| data.feature_type() == apollo_element.feature_type())
+            .map(|(id, data)| (id.to_owned(), data.to_owned()))
+            .collect();
+
+        // Found one element with the same type and (root) parent in the original data, using that one
+        if same_type.len() == 1 {
+            return Some(
+                same_type
+                    .iter()
+                    .map(|(id, _data)| id.to_owned())
+                    .nth(0)
+                    .unwrap(),
+            );
+        }
+
+        // TODO try location?
+
+        None
+    }
+
     /// data1 is "full" GFF, data2 is Apollo GFF
     fn compare_apollo(&self) -> Result<Value, Box<dyn Error>> {
         let (data1, data2) = match (&self.data1, &self.data2) {
@@ -250,52 +328,25 @@ impl CompareGFF {
         let mut issues: Vec<String> = vec![];
         let mut changes: Vec<Value> = vec![];
 
-        let re = Regex::new(r"-\d+$").unwrap();
+        let _re = Regex::new(r"-\d+$").unwrap();
 
-        for (id, apollo_element) in data2 {
-            let attrs = apollo_element.attributes();
-            let mut original_id: Option<String> = None;
-            let mut original_parent_id: Option<String> = None;
-            if attrs.contains_key("orig_id") {
-                let orig_id = attrs["orig_id"].clone();
-                if !data1.contains_key(&orig_id) {
-                    issues.push(format!("Original ID {} not in full dataset!", &orig_id));
-                    continue;
-                }
-                original_id = Some(orig_id);
-            } else if attrs.contains_key("Parent") {
-                let parent = attrs["Parent"].clone();
-                if !data2.contains_key(&parent) {
-                    issues.push(format!(
-                        "Parent {} of {} not in Apollo dataset!",
-                        &parent, &id
-                    ));
-                    continue;
-                }
-                let parent_row = data2.get(&parent).unwrap();
-                if !parent_row.attributes().contains_key("Name") {
-                    issues.push(format!(
-                        "Parent {} of {} has no 'Name' attribute",
-                        &parent, &id
-                    ));
-                    continue;
-                }
-                let parent_id = parent_row.attributes().get("Name").unwrap();
-                let parent_id = re.replace(parent_id, "");
-                original_parent_id = Some(parent_id.to_string());
-            } else {
-                let row_id = attrs.get("Name").unwrap();
-                let row_id = re.replace(row_id, "");
-                issues.push(format!("Top-level row {} is {}", &id, &row_id));
-                // row_id => original_id?
-            }
-            //println!("{:?}/{:?}", &original_id, &original_parent_id);
-            let original_id = match original_id {
+        for (_id, apollo_element) in data2 {
+            let _attrs = apollo_element.attributes();
+            let original_id = match self.infer_original_id_from_apollo(
+                data1,
+                data2,
+                &apollo_element,
+                &mut issues,
+            ) {
                 Some(id) => id,
                 None => {
                     issues.push(format!("No original ID found for {:?}", apollo_element));
                     continue;
                 }
+            };
+            let original_parent_id = match data1.get(&original_id) {
+                Some(e) => e.attributes().get("Parent"),
+                None => None,
             };
             let original_element = match data1.get(&original_id) {
                 Some(e) => e,
