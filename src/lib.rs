@@ -13,6 +13,11 @@ use std::fs::File;
 
 type HashGFF = HashMap<String, bio::io::gff::Record>;
 
+pub enum CompareMode {
+    Forward,
+    Reverse,
+}
+
 pub struct CompareGFF {
     data1: Option<HashGFF>,
     data2: Option<HashGFF>,
@@ -43,8 +48,8 @@ impl CompareGFF {
         let mut result = json!( {
             "changes" :[]
         });
-        self.compare(0, &mut result)?;
-        self.compare(1, &mut result)?;
+        self.compare(CompareMode::Forward, &mut result)?;
+        self.compare(CompareMode::Reverse, &mut result)?;
         Ok(result)
     }
 
@@ -103,14 +108,14 @@ impl CompareGFF {
         key: &String,
         values: &Vec<String>,
         attrs: &MultiMap<String, String>,
-        mode: u8,
+        mode: CompareMode,
         result: &mut Value,
     ) {
         // Does attrs have that key at all?
         if !attrs.contains_key(key) {
             for value in values {
                 let action = match mode {
-                    0 => "remove",
+                    CompareMode::Forward => "remove",
                     _ => "add",
                 };
                 let j = json!( {"action" : action , "what": "attribute" , "id" : id , "key":key.to_string() , "value" : value.to_string() } );
@@ -125,7 +130,7 @@ impl CompareGFF {
         for value2 in values2 {
             if !values.contains(&value2) {
                 let action = match mode {
-                    0 => "add",
+                    CompareMode::Forward => "add",
                     _ => "remove",
                 };
                 let j = json!({ "action" : action , "what" : "attribute" , "id" : id , "key":key , "value" : value2 } );
@@ -133,11 +138,14 @@ impl CompareGFF {
             }
         }
 
-        if mode == 1 {
-            for value in values {
-                if !values2.contains(&value) {
-                    let j = json!({"action" : "add", "what" : "attribute" , "id" : id , "key":key , "value" : value });
-                    result["changes"].as_array_mut().unwrap().push(j);
+        match mode {
+            CompareMode::Forward => {}
+            CompareMode::Reverse => {
+                for value in values {
+                    if !values2.contains(&value) {
+                        let j = json!({"action" : "add", "what" : "attribute" , "id" : id , "key":key , "value" : value });
+                        result["changes"].as_array_mut().unwrap().push(j);
+                    }
                 }
             }
         }
@@ -191,15 +199,16 @@ impl CompareGFF {
         changes
     }
 
-    fn compare(&self, mode: u8, result: &mut Value) -> Result<(), Box<dyn Error>> {
+    fn compare(&self, mode: CompareMode, result: &mut Value) -> Result<(), Box<dyn Error>> {
         let (data1, data2) = match (&self.data1, &self.data2) {
             (Some(data1), Some(data2)) => (data1, data2),
             _ => return Err(From::from(format!("Both GFF sets need to be initialized"))),
         };
         for (id, r1) in data1 {
             if data2.contains_key(id) {
-                if mode == 1 {
-                    continue;
+                match mode {
+                    CompareMode::Forward => {}
+                    CompareMode::Reverse => continue,
                 }
                 let r2 = &data2[id];
                 self.compare_basics(&r1, r2, id.as_str())
@@ -209,17 +218,24 @@ impl CompareGFF {
                 let r1a = r1.attributes();
                 let r2a = r2.attributes();
                 for (key, value) in r1a {
-                    self.compare_attributes(&id, key, value, r2a, 0, result);
+                    self.compare_attributes(&id, key, value, r2a, CompareMode::Forward, result);
                 }
 
                 for (key, value) in r2a {
-                    self.compare_attributes(&id, key, value, r1a, 1, result);
+                    self.compare_attributes(&id, key, value, r1a, CompareMode::Reverse, result);
                 }
             } else {
-                let mut o = json! ({"what":"row" , "action": if mode==0 {"remove"} else {"add"} , "id":id });
-                let s = serde_json::to_string(&r1).unwrap();
-                o["data"] = json!(s);
-                result["changes"].as_array_mut().unwrap().push(o);
+                match mode {
+                    CompareMode::Forward => {
+                        let mut o = json! ({"what":"row" , "action": "remove" , "id":id });
+                        let s = serde_json::to_string(&r1).unwrap();
+                        o["data"] = json!(s);
+                        result["changes"].as_array_mut().unwrap().push(o);
+                    }
+                    CompareMode::Reverse => {
+                        // ???
+                    }
+                }
             }
         }
         Ok(())
@@ -497,7 +513,14 @@ mod tests {
         attrs.insert("the_key".to_string(), "value2".to_string());
         attrs.insert("the_key".to_string(), "value3".to_string());
 
-        CompareGFF::new().compare_attributes(&id, &key, &values, &attrs, 0, &mut result);
+        CompareGFF::new().compare_attributes(
+            &id,
+            &key,
+            &values,
+            &attrs,
+            CompareMode::Forward,
+            &mut result,
+        );
 
         let expected = json! ({ "changes" : [ { "action" : "add", "what": "attribute", "id" : id , "key":key , "value" : "value2" } ] });
         assert_eq!(result, expected);

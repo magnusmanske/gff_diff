@@ -8,9 +8,9 @@ edition = "2018"
 bio = "*"
 #json = "*"
 serde_json = "*"
-multimap = "0.4.0"
-getopts = "0.2.18"
-regex = "1.1.2"
+multimap = "*"
+getopts = "*"
+regex = "*"
 
 [profile.dev]
 opt-level = 3
