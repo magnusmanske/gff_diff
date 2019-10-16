@@ -6,11 +6,11 @@ edition = "2018"
 
 [dependencies]
 bio = "*"
-#json = "*"
 serde_json = "*"
 multimap = "*"
 getopts = "*"
 regex = "*"
+rayon = "*"
 
 [profile.dev]
 opt-level = 3

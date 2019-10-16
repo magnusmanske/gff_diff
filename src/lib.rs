@@ -4,12 +4,14 @@ extern crate serde_json;
 
 use bio::io::gff;
 use multimap::MultiMap;
+use rayon::prelude::*;
 use regex::Regex;
 use serde_json::value::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
+use std::sync::{Arc, Mutex};
 
 type HashGFF = HashMap<String, bio::io::gff::Record>;
 
@@ -25,6 +27,7 @@ pub struct CompareGFF {
 }
 
 impl CompareGFF {
+    /// Creates a new, blank CompareGFF.
     pub fn new() -> Self {
         Self {
             data1: None,
@@ -33,17 +36,23 @@ impl CompareGFF {
         }
     }
 
+    /// Changes the option to record issues in the result.
     pub fn record_issues(&mut self, do_record: bool) {
         self.record_issues = do_record;
     }
 
-    pub fn new_from_files(filename1: &String, filename2: &String) -> Result<Self, Box<dyn Error>> {
+    /// Creates a new CompareGFF with two files.
+    pub fn new_from_files<S: Into<String>>(
+        filename1: S,
+        filename2: S,
+    ) -> Result<Self, Box<dyn Error>> {
         let mut ret = Self::new();
-        ret.data1 = Some(ret.read(Box::new(File::open(&filename1)?))?);
-        ret.data2 = Some(ret.read(Box::new(File::open(&filename2)?))?);
+        ret.data1 = Some(ret.read(Box::new(File::open(filename1.into())?))?);
+        ret.data2 = Some(ret.read(Box::new(File::open(filename2.into())?))?);
         Ok(ret)
     }
 
+    /// Generates the diff between the two loaded files.
     pub fn diff(&self) -> Result<Value, Box<dyn Error>> {
         let mut result = json!( {
             "changes" :[]
@@ -53,10 +62,26 @@ impl CompareGFF {
         Ok(result)
     }
 
+    /// Sorts a comparison JSON. Potentially slow. Used in tests.
+    pub fn sort_comparison(result: &mut Value) {
+        match result["changes"].as_array_mut() {
+            Some(changes) => {
+                changes.par_sort_by(|a, b| {
+                    let a = serde_json::to_string(a).unwrap();
+                    let b = serde_json::to_string(b).unwrap();
+                    a.partial_cmp(&b).unwrap()
+                });
+                result["changes"] = json!(changes);
+            }
+            None => {}
+        }
+    }
+
     pub fn diff_apollo(&self) -> Result<Value, Box<dyn Error>> {
         self.compare_apollo()
     }
 
+    /// Reads a file from a Reeader into a HashGFF hash table.
     fn read(&self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
         let mut ret: HashMap<String, bio::io::gff::Record> = HashMap::new();
         let mut reader = gff::Reader::new(file, gff::GffType::GFF3);
@@ -87,6 +112,7 @@ impl CompareGFF {
         Ok(ret)
     }
 
+    /// Writes the GFF data. Used to construct a new file after diff.
     fn write(&self, file: Box<dyn std::io::Write>, data: &HashGFF) -> Result<(), Box<dyn Error>> {
         let mut writer = gff::Writer::new(file, gff::GffType::GFF3);
         for (_k, v) in data {
@@ -102,6 +128,7 @@ impl CompareGFF {
         }
     }
 
+    /// Compares the attributes of two GFF elements.
     fn compare_attributes(
         &self,
         id: &String,
@@ -109,48 +136,58 @@ impl CompareGFF {
         values: &Vec<String>,
         attrs: &MultiMap<String, String>,
         mode: CompareMode,
-        result: &mut Value,
+        result: &Arc<Mutex<&mut Value>>,
     ) {
         // Does attrs have that key at all?
         if !attrs.contains_key(key) {
-            for value in values {
+            values.par_iter().for_each(|value|{
                 let action = match mode {
                     CompareMode::Forward => "remove",
                     _ => "add",
                 };
                 let j = json!( {"action" : action , "what": "attribute" , "id" : id , "key":key.to_string() , "value" : value.to_string() } );
-                result["changes"].as_array_mut().unwrap().push(j);
-            }
+                result.lock().unwrap()["changes"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(j);
+            });
             return;
         }
 
         // attrs has the key, compare values
         let values2 = attrs.get_vec(key).unwrap();
 
-        for value2 in values2 {
+        values2.par_iter().for_each(|value2|{
             if !values.contains(&value2) {
                 let action = match mode {
                     CompareMode::Forward => "add",
                     _ => "remove",
                 };
                 let j = json!({ "action" : action , "what" : "attribute" , "id" : id , "key":key , "value" : value2 } );
-                result["changes"].as_array_mut().unwrap().push(j);
+                result.lock().unwrap()["changes"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(j);
             }
-        }
+        });
 
         match mode {
             CompareMode::Forward => {}
             CompareMode::Reverse => {
-                for value in values {
+                values.par_iter().for_each(|value|{
                     if !values2.contains(&value) {
                         let j = json!({"action" : "add", "what" : "attribute" , "id" : id , "key":key , "value" : value });
-                        result["changes"].as_array_mut().unwrap().push(j);
+                        result.lock().unwrap()["changes"]
+                            .as_array_mut()
+                            .unwrap()
+                            .push(j);
                     }
-                }
+                });
             }
         }
     }
 
+    /// Compares the basic attributes (location, type etc.) of two GFF elements.
     fn compare_basics(
         &self,
         r1: &bio::io::gff::Record,
@@ -199,45 +236,64 @@ impl CompareGFF {
         changes
     }
 
+    /// Compares the two loaded GFF files.
     fn compare(&self, mode: CompareMode, result: &mut Value) -> Result<(), Box<dyn Error>> {
         let (data1, data2) = match (&self.data1, &self.data2) {
-            (Some(data1), Some(data2)) => (data1, data2),
+            (Some(data1), Some(data2)) => match mode {
+                CompareMode::Forward => (data1, data2),
+                CompareMode::Reverse => (data2, data1),
+            },
             _ => return Err(From::from(format!("Both GFF sets need to be initialized"))),
         };
-        for (id, r1) in data1 {
+        let result = Arc::new(Mutex::new(result));
+        data1.par_iter().for_each(|(id, r1)| {
             if data2.contains_key(id) {
                 match mode {
                     CompareMode::Forward => {}
-                    CompareMode::Reverse => continue,
+                    CompareMode::Reverse => return, // Already did that with CompareMode::Forward
                 }
                 let r2 = &data2[id];
                 self.compare_basics(&r1, r2, id.as_str())
-                    .drain(..)
-                    .for_each(|change| result["changes"].as_array_mut().unwrap().push(change));
+                    .par_iter()
+                    .for_each(|change| {
+                        result.lock().unwrap()["changes"]
+                            .as_array_mut()
+                            .unwrap()
+                            .push(change.to_owned())
+                    });
 
                 let r1a = r1.attributes();
                 let r2a = r2.attributes();
                 for (key, value) in r1a {
-                    self.compare_attributes(&id, key, value, r2a, CompareMode::Forward, result);
+                    self.compare_attributes(&id, key, value, r2a, CompareMode::Forward, &result);
                 }
 
                 for (key, value) in r2a {
-                    self.compare_attributes(&id, key, value, r1a, CompareMode::Reverse, result);
+                    self.compare_attributes(&id, key, value, r1a, CompareMode::Reverse, &result);
                 }
             } else {
                 match mode {
                     CompareMode::Forward => {
                         let mut o = json! ({"what":"row" , "action": "remove" , "id":id });
                         let s = serde_json::to_string(&r1).unwrap();
-                        o["data"] = json!(s);
-                        result["changes"].as_array_mut().unwrap().push(o);
+                        o["removed_element"] = serde_json::from_str(&s).unwrap();
+                        result.lock().unwrap()["changes"]
+                            .as_array_mut()
+                            .unwrap()
+                            .push(o);
                     }
                     CompareMode::Reverse => {
-                        // ???
+                        let mut o = json! ({"what":"row" , "action": "add" , "id":id });
+                        let s = serde_json::to_string(&r1).unwrap();
+                        o["added_element"] = serde_json::from_str(&s).unwrap();
+                        result.lock().unwrap()["changes"]
+                            .as_array_mut()
+                            .unwrap()
+                            .push(o);
                     }
                 }
             }
-        }
+        });
         Ok(())
     }
 
@@ -418,6 +474,7 @@ impl CompareGFF {
         })
     }
 
+    /// Applies the given diff to the data loaded into the gff 1 slot.
     pub fn apply_diff(&mut self, diff: &Value) -> Result<&HashGFF, Box<dyn Error>> {
         let changes = match diff["changes"].as_array() {
             Some(changes) => changes,
@@ -500,6 +557,20 @@ impl CompareGFF {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+
+    fn compare_expected(dir: &str) {
+        let gff_file1 = format!("test/{}/core.gff", dir);
+        let gff_file2 = format!("test/{}/cap.gff", dir);
+        let expected_file = format!("test/{}/expected.json", dir);
+        let cg = CompareGFF::new_from_files(gff_file1, gff_file2).unwrap();
+        let mut diff = cg.diff().unwrap();
+        let expected = fs::read_to_string(expected_file).unwrap();
+        let mut expected: Value = serde_json::from_str(&expected).unwrap();
+        CompareGFF::sort_comparison(&mut diff);
+        CompareGFF::sort_comparison(&mut expected);
+        assert_eq!(diff, expected);
+    }
 
     #[test]
     fn attribute_added() {
@@ -508,6 +579,7 @@ mod tests {
         let values = vec!["value1".to_string(), "value3".to_string()];
         let mut attrs = MultiMap::new();
         let mut result = json! ({"changes":[]});
+        let result = Arc::new(Mutex::new(&mut result));
 
         attrs.insert("the_key".to_string(), "value1".to_string());
         attrs.insert("the_key".to_string(), "value2".to_string());
@@ -519,10 +591,35 @@ mod tests {
             &values,
             &attrs,
             CompareMode::Forward,
-            &mut result,
+            &result,
         );
 
         let expected = json! ({ "changes" : [ { "action" : "add", "what": "attribute", "id" : id , "key":key , "value" : "value2" } ] });
-        assert_eq!(result, expected);
+        assert_eq!(**result.lock().unwrap(), expected);
+    }
+
+    #[test]
+    fn added_exon() {
+        compare_expected("added_exon");
+    }
+
+    #[test]
+    fn alter_exon() {
+        compare_expected("alter_exon");
+    }
+
+    #[test]
+    fn gene_in_intron() {
+        compare_expected("gene_in_intron");
+    }
+
+    #[test]
+    fn gene_merge() {
+        compare_expected("gene_merge");
+    }
+
+    #[test]
+    fn remove_exon() {
+        compare_expected("remove_exon");
     }
 }
