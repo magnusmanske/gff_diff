@@ -1,0 +1,64 @@
+{
+  "changes": [
+    {
+      "action": "update",
+      "id": "M0001",
+      "key": "end",
+      "value": "1200",
+      "what": "row"
+    },
+    {
+      "action": "update",
+      "id": "G0001",
+      "key": "end",
+      "value": "1200",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0006"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 1200,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1000,
+        "strand": "+"
+      },
+      "id": "C0006",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0006"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 1200,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1000,
+        "strand": "+"
+      },
+      "id": "E0006",
+      "what": "row"
+    }
+  ]
+}
