@@ -49,6 +49,7 @@ impl CompareGFF {
         let mut ret = Self::new();
         ret.data1 = Some(ret.read(Box::new(File::open(filename1.into())?))?);
         ret.data2 = Some(ret.read(Box::new(File::open(filename2.into())?))?);
+        println!("READ");
         Ok(ret)
     }
 
@@ -59,6 +60,7 @@ impl CompareGFF {
         });
         self.compare(CompareMode::Forward, &mut result)?;
         self.compare(CompareMode::Reverse, &mut result)?;
+        println!("COMPARED");
         Ok(result)
     }
 
@@ -83,29 +85,17 @@ impl CompareGFF {
 
     /// Reads a file from a Reeader into a HashGFF hash table.
     fn read(&self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
-        let mut ret: HashMap<String, bio::io::gff::Record> = HashMap::new();
         let mut reader = gff::Reader::new(file, gff::GffType::GFF3);
 
-        for element in reader.records() {
-            if !element.is_ok() {
-                continue;
-            }
-            let mut e = match element {
-                Ok(e) => e,
-                _ => continue,
-            };
-            if !e.attributes().contains_key("ID") {
-                continue;
-            }
-            let id = e.attributes()["ID"].clone();
-            if ret.contains_key(&id) {
-                println!("Double ID: {:?}", id);
-                let _attrs = e.attributes_mut();
-                //attrs["ID"] = "xxxx".to_string(); // TODO FIXME
-                continue;
-            }
-            ret.insert(id, e);
-        }
+        //TODO check for double IDs?
+        let ret: HashMap<String, bio::io::gff::Record> = reader
+            .records()
+            .filter_map(|element| {
+                let e = element.ok()?;
+                let id = e.attributes().get("ID")?.to_string();
+                Some((id, e))
+            })
+            .collect();
         if ret.is_empty() {
             return Err(From::from(format!("Empty file or no gff file")));
         }
