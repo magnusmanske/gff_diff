@@ -25,6 +25,7 @@ pub struct CompareGFF {
     data1: Option<HashGFF>,
     data2: Option<HashGFF>,
     record_issues: bool,
+    flexible_ids: bool,
     issues: Vec<String>,
 }
 
@@ -35,6 +36,7 @@ impl CompareGFF {
             data1: None,
             data2: None,
             record_issues: false,
+            flexible_ids: true,
             issues: vec![],
         }
     }
@@ -114,6 +116,32 @@ impl CompareGFF {
         }
     }
 
+    fn unique_id(
+        &mut self,
+        ids: &mut HashSet<String>,
+        id: String,
+        entry: &bio::io::gff::Record,
+    ) -> Result<String, String> {
+        if !ids.contains(&id) {
+            return Ok(id);
+        }
+        let mut id = id;
+        if self.flexible_ids {
+            let original_id = id.to_owned();
+            id += &format!(
+                "_{}_{}_{}",
+                entry.feature_type(),
+                entry.start(),
+                entry.end()
+            );
+            if !ids.contains(&id) {
+                self.log_issue(format!("Double ID {}, changed to {}", &original_id, &id));
+                return Ok(id);
+            }
+        }
+        return Err(format!("Double ID {}, not adding {:?}", &id, entry));
+    }
+
     /// Reads a file from a Reader into a HashGFF hash table.
     fn read(&mut self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
         let mut reader = gff::Reader::new(file, gff::GffType::GFF3);
@@ -124,11 +152,13 @@ impl CompareGFF {
             .records()
             .filter_map(|element| {
                 let e = element.ok()?;
-                let id = e.attributes().get("ID")?.to_string();
-                if ids.contains(&id) {
-                    self.log_issue(format!("Double ID {}, not adding {:?}", &id, &e));
-                    return None;
-                }
+                let id = match self.unique_id(&mut ids, e.attributes().get("ID")?.to_string(), &e) {
+                    Ok(id) => id,
+                    Err(e) => {
+                        self.log_issue(e);
+                        return None;
+                    }
+                };
                 ids.insert(id.clone());
                 Some((id, e))
             })
@@ -762,6 +792,11 @@ mod tests {
         CompareGFF::sort_comparison(&mut diff);
         CompareGFF::sort_comparison(&mut expected);
         assert_eq!(diff["changes"], expected["changes"]);
+
+        // Apply diff to data1
+        cg.apply_diff(&diff).unwrap();
+        let diff = cg.diff().unwrap();
+        assert_eq!(diff["changes"].as_array().unwrap().len(), 0);
     }
 
     #[test]
@@ -824,6 +859,11 @@ mod tests {
     #[test]
     fn gene_validation_no_start() {
         compare_expected("gene_validation_no_start");
+    }
+
+    #[test]
+    fn gene_validation_no_stop() {
+        compare_expected("gene_validation_no_stop");
     }
 
     #[test]

@@ -1,0 +1,60 @@
+{
+  "changes": [
+    {
+      "action": "remove",
+      "id": "55073bc2-cc7d-430d-81f3-fa683dcf7dbc_CDS_1238_1567",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "55073bc2-cc7d-430d-81f3-fa683dcf7dbc"
+          ],
+          "Name": [
+            "55073bc2-cc7d-430d-81f3-fa683dcf7dbc-CDS"
+          ],
+          "Parent": [
+            "8cda19b5-47e0-42eb-8dd2-9377b326c947"
+          ]
+        },
+        "end": 1567,
+        "feature_type": "CDS",
+        "frame": "0",
+        "score": ".",
+        "seqname": "scf_1925491332",
+        "source": ".",
+        "start": 1238,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "55073bc2-cc7d-430d-81f3-fa683dcf7dbc"
+          ],
+          "Name": [
+            "55073bc2-cc7d-430d-81f3-fa683dcf7dbc-CDS"
+          ],
+          "Parent": [
+            "8cda19b5-47e0-42eb-8dd2-9377b326c947"
+          ]
+        },
+        "end": 1564,
+        "feature_type": "CDS",
+        "frame": "0",
+        "score": ".",
+        "seqname": "scf_1925491332",
+        "source": ".",
+        "start": 1238,
+        "strand": "+"
+      },
+      "id": "55073bc2-cc7d-430d-81f3-fa683dcf7dbc_CDS_1238_1564",
+      "what": "row"
+    }
+  ],
+  "issues": [
+    "Double ID 55073bc2-cc7d-430d-81f3-fa683dcf7dbc, changed to 55073bc2-cc7d-430d-81f3-fa683dcf7dbc_CDS_1238_1567",
+    "Double ID 55073bc2-cc7d-430d-81f3-fa683dcf7dbc, changed to 55073bc2-cc7d-430d-81f3-fa683dcf7dbc_CDS_1238_1564"
+  ]
+}
