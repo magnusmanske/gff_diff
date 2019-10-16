@@ -11,6 +11,7 @@ multimap = "*"
 getopts = "*"
 regex = "*"
 rayon = "*"
+ignore-result = "*"
 
 [profile.dev]
 opt-level = 3

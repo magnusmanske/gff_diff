@@ -3,6 +3,7 @@ extern crate bio;
 extern crate serde_json;
 
 use bio::io::gff;
+use ignore_result::Ignore;
 use multimap::MultiMap;
 use rayon::prelude::*;
 use regex::Regex;
@@ -49,7 +50,6 @@ impl CompareGFF {
         let mut ret = Self::new();
         ret.data1 = Some(ret.read(Box::new(File::open(filename1.into())?))?);
         ret.data2 = Some(ret.read(Box::new(File::open(filename2.into())?))?);
-        println!("READ");
         Ok(ret)
     }
 
@@ -60,7 +60,6 @@ impl CompareGFF {
         });
         self.compare(CompareMode::Forward, &mut result)?;
         self.compare(CompareMode::Reverse, &mut result)?;
-        println!("COMPARED");
         Ok(result)
     }
 
@@ -83,7 +82,7 @@ impl CompareGFF {
         self.compare_apollo()
     }
 
-    /// Reads a file from a Reeader into a HashGFF hash table.
+    /// Reads a file from a Reader into a HashGFF hash table.
     fn read(&self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
         let mut reader = gff::Reader::new(file, gff::GffType::GFF3);
 
@@ -417,7 +416,6 @@ impl CompareGFF {
                     continue;
                 }
             };
-            //println!("!!{:?}", &original_element);
 
             // Add/remove/change parent ID
             match (
@@ -464,6 +462,229 @@ impl CompareGFF {
         })
     }
 
+    fn gff_from_json(j: &Value) -> Result<bio::io::gff::Record, String> {
+        let mut ret = bio::io::gff::Record::new();
+        Self::apply_diff_row_update(&json!({"key":"seqname","value":&j["seqname"]}), &mut ret)
+            .ignore();
+        Self::apply_diff_row_update(&json!({"key":"source","value":&j["source"]}), &mut ret)
+            .ignore();
+        Self::apply_diff_row_update(
+            &json!({"key":"feature_type","value":&j["feature_type"]}),
+            &mut ret,
+        )
+        .ignore();
+        Self::apply_diff_row_update(&json!({"key":"start","value":&j["start"]}), &mut ret).ignore();
+        Self::apply_diff_row_update(&json!({"key":"end","value":&j["end"]}), &mut ret).ignore();
+        Self::apply_diff_row_update(&json!({"key":"score","value":&j["score"]}), &mut ret).ignore();
+        Self::apply_diff_row_update(&json!({"key":"strand","value":&j["strand"]}), &mut ret)
+            .ignore();
+        Self::apply_diff_row_update(&json!({"key":"frame","value":&j["frame"]}), &mut ret).ignore();
+
+        // Attributes
+        match j["attributes"].as_object() {
+            Some(attributes) => {
+                attributes.iter().for_each(|(key, values)| {
+                    match values.as_array() {
+                        Some(values) => {
+                            values
+                                .iter()
+                                .filter_map(|value| value.as_str())
+                                .for_each(|value| {
+                                    Self::apply_diff_attribute_add(
+                                        &mut ret,
+                                        key.to_string(),
+                                        value.to_string(),
+                                    )
+                                    .ignore();
+                                })
+                        }
+                        None => {} // No values?!?
+                    }
+                });
+            }
+            None => {} // No attributes
+        }
+
+        Ok(ret)
+    }
+
+    fn apply_diff_row_remove(change: &Value, data: &mut HashGFF) -> Result<(), String> {
+        match change["id"].as_str() {
+            Some(id) => {
+                data.remove(id);
+            }
+            None => return Err(format!("apply_diff_row_remove: add row, but no id set")),
+        }
+        Ok(())
+    }
+
+    fn apply_diff_row_update(
+        change: &Value,
+        element: &mut bio::io::gff::Record,
+    ) -> Result<(), String> {
+        let value = match change["value"].as_str() {
+            Some(v) => v.to_string(),
+            None => match change["value"].as_i64() {
+                Some(v) => v.to_string(),
+                None => return Err(format!("apply_diff_row_update: No value in {}", &change)),
+            },
+        };
+        match change["key"].as_str() {
+            Some("seqname") => *element.seqname_mut() = value,
+            Some("source") => *element.source_mut() = value,
+            Some("feature_type") => *element.feature_type_mut() = value,
+            Some("start") => *element.start_mut() = value.parse::<u64>().unwrap(),
+            Some("end") => *element.end_mut() = value.parse::<u64>().unwrap(),
+            Some("score") => *element.score_mut() = value,
+            Some("strand") => *element.strand_mut() = value,
+            Some("frame") => *element.frame_mut() = value,
+            _ => {
+                return Err(format!(
+                    "apply_diff_row_update: Unknown/missing 'key' in {}",
+                    change
+                ))
+            }
+        }
+        Ok(())
+    }
+
+    fn apply_diff_row_add_or_update(change: &Value, data: &mut HashGFF) -> Result<(), String> {
+        match change["id"].as_str() {
+            Some(id) => {
+                let action = change["action"].as_str().unwrap_or("");
+                let element = match action {
+                    "add" => data
+                        .entry(id.to_string())
+                        .or_insert(Self::gff_from_json(&change["added_element"])?),
+                    _ => match data.get_mut(&id.to_string()) {
+                        Some(e) => e,
+                        None => return Err(format!(
+                            "apply_diff_row_add_or_update: {} ID {} does not appear in data set",
+                            action, &id
+                        )),
+                    },
+                };
+                if action == "update" {
+                    Self::apply_diff_row_update(change, element)?;
+                }
+                Ok(())
+            }
+            None => Err(format!(
+                "apply_diff_row_add_or_update: Missing 'id' in {:?}",
+                change
+            )),
+        }
+    }
+
+    fn apply_diff_rows(
+        changes: &Vec<Value>,
+        data: &mut HashGFF,
+        action: &str,
+    ) -> Result<(), Box<dyn Error>> {
+        match changes
+            .iter()
+            .filter(|change| change["what"].as_str().unwrap_or("") == "row")
+            .filter(|change| change["action"].as_str().unwrap_or("") == action)
+            .map(|change| match change["action"].as_str() {
+                Some("remove") => Self::apply_diff_row_remove(change, data),
+                Some("update") | Some("add") => Self::apply_diff_row_add_or_update(change, data),
+                Some(other) => Err(format!(
+                    "apply_diff_rows: Unknown action {} in {:?}",
+                    other, change
+                )),
+                _ => Err(format!("apply_diff_rows: No action in {:?}", change)),
+            })
+            .filter_map(|r| match r {
+                Ok(_) => None,
+                Err(e) => Some(e),
+            })
+            .nth(0)
+        {
+            Some(err) => Err(From::from(err)),
+            None => Ok(()),
+        }
+    }
+
+    fn apply_diff_attribute_add(
+        gff: &mut bio::io::gff::Record,
+        key: String,
+        value: String,
+    ) -> Result<(), String> {
+        gff.attributes_mut().insert(key, value);
+        Ok(())
+    }
+
+    fn apply_diff_attribute_remove(
+        gff: &mut bio::io::gff::Record,
+        key: String,
+        value: String,
+    ) -> Result<(), String> {
+        match gff.attributes_mut().get_vec_mut(&key) {
+            Some(v) => {
+                v.retain(|x| *x != value);
+                Ok(())
+            }
+            None => Err(format!(
+                "No attribute {}/{} to remove from {:?}",
+                key, value, gff
+            )),
+        }
+    }
+
+    fn apply_diff_attributes(
+        changes: &Vec<Value>,
+        data: &mut HashGFF,
+        action: &str,
+    ) -> Result<(), Box<dyn Error>> {
+        match changes
+            .iter()
+            .filter(|change| change["what"].as_str().unwrap_or("") == "attribute")
+            .filter(|change| change["action"].as_str().unwrap_or("") == action)
+            .map(|change| {
+                let id = match change["id"].as_str() {
+                    Some(id) => id.to_string(),
+                    None => return Err(format!("apply_diff_attributes: No ID given: {}", change)),
+                };
+                let element = match data.get_mut(&id) {
+                    Some(e) => e,
+                    None => {
+                        return Err(format!(
+                            "apply_diff_attributes: ID {} not found in GFF1",
+                            id
+                        ))
+                    }
+                };
+                let key = match change["key"].as_str() {
+                    Some(s) => s.to_string(),
+                    None => return Err(format!("apply_diff_attributes: No key given: {}", change)),
+                };
+                let value = match change["value"].as_str() {
+                    Some(s) => s.to_string(),
+                    None => {
+                        return Err(format!("apply_diff_attributes: No value given: {}", change))
+                    }
+                };
+                match change["action"].as_str() {
+                    Some("add") => Self::apply_diff_attribute_add(element, key, value),
+                    Some("remove") => Self::apply_diff_attribute_remove(element, key, value),
+                    Some(other) => Err(format!(
+                        "apply_diff_attributes: Unknown action {} in {:?}",
+                        other, change
+                    )),
+                    _ => Err(format!("apply_diff_attributes: No action in {:?}", change)),
+                }
+            })
+            .filter_map(|r| match r {
+                Ok(_) => None,
+                Err(e) => Some(e),
+            })
+            .nth(0)
+        {
+            Some(err) => Err(From::from(err)),
+            None => Ok(()),
+        }
+    }
+
     /// Applies the given diff to the data loaded into the gff 1 slot.
     pub fn apply_diff(&mut self, diff: &Value) -> Result<&HashGFF, Box<dyn Error>> {
         let changes = match diff["changes"].as_array() {
@@ -474,72 +695,12 @@ impl CompareGFF {
             Some(data) => data,
             _ => return Err(From::from(format!("GFF set 1 needs to be initialized"))),
         };
-        changes
-            .iter()
-            .for_each(|change| match change["action"].as_str() {
-                Some("remove") => {
-                    // TODO
-                }
-                Some("update") | Some("add") => {
-                    match change["what"].as_str() {
-                        Some("row") => match change["id"].as_str() {
-                            Some(id) => {
-                                let element = match data.get_mut(id) {
-                                    Some(element) => element,
-                                    None => {
-                                        eprintln!(
-                                            "apply_diff: ID {} does not appear in data set",
-                                            &id
-                                        );
-                                        return;
-                                    }
-                                };
-                                let value = match change["value"].as_str() {
-                                    Some(v) => v,
-                                    None => {
-                                        eprintln!("apply_diff: No value in {:?}", &change);
-                                        return;
-                                    }
-                                };
-                                match change["key"].as_str() {
-                                    Some("seqname") => *element.seqname_mut() = value.to_string(),
-                                    Some("source") => *element.source_mut() = value.to_string(),
-                                    Some("feature_type") => {
-                                        *element.feature_type_mut() = value.to_string()
-                                    }
-                                    Some("start") => {
-                                        *element.start_mut() = value.parse::<u64>().unwrap()
-                                    }
-                                    Some("end") => {
-                                        *element.end_mut() = value.parse::<u64>().unwrap()
-                                    }
-                                    Some("score") => *element.score_mut() = value.to_string(),
-                                    Some("strand") => *element.strand_mut() = value.to_string(),
-                                    Some("frame") => *element.frame_mut() = value.to_string(),
-                                    _ => eprintln!(
-                                        "apply_diff: Unknown/missing 'key' in {:?}",
-                                        change
-                                    ),
-                                }
-                            }
-                            None => eprintln!("apply_diff: Missing 'id' in {:?}", change),
-                        },
-                        Some("attribute") => {
-                            // Todo
-                            // Differenciate between add and update?
-                        }
-                        _ => {
-                            eprintln!("apply_diff: Unknown/missing 'what' in {:?}", change);
-                        }
-                    }
-                }
-                Some(other) => {
-                    eprintln!("apply_diff: Unknown action {} in {:?}", other, change);
-                }
-                _ => {
-                    eprintln!("apply_diff: No action in {:?}", change);
-                }
-            });
+        Self::apply_diff_rows(&changes, data, "remove")?;
+        Self::apply_diff_rows(&changes, data, "add")?;
+        Self::apply_diff_rows(&changes, data, "update")?;
+        Self::apply_diff_attributes(&changes, data, "remove")?;
+        Self::apply_diff_attributes(&changes, data, "add")?;
+        Self::apply_diff_attributes(&changes, data, "update")?;
         Ok(data)
     }
 }
@@ -606,6 +767,11 @@ mod tests {
     #[test]
     fn gene_merge() {
         compare_expected("gene_merge");
+    }
+
+    #[test]
+    fn gene_split() {
+        compare_expected("gene_split");
     }
 
     #[test]
