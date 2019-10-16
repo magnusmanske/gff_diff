@@ -778,6 +778,9 @@ mod tests {
     use super::*;
     use std::fs;
 
+    /// This computes a diff between two test GFF files, then compares it with the expected result (also a file).
+    /// Then, it applies the diff to the original GFF file (#1), and diffs the modified GFF to the #2 GFF.
+    /// This should yield no changes
     fn compare_expected(dir: &str) {
         let gff_file1 = format!("test/{}/core.gff", dir);
         let gff_file2 = format!("test/{}/cap.gff", dir);
@@ -793,7 +796,7 @@ mod tests {
         CompareGFF::sort_comparison(&mut expected);
         assert_eq!(diff["changes"], expected["changes"]);
 
-        // Apply diff to data1
+        // Apply diff to data2
         cg.apply_diff(&diff).unwrap();
         let diff = cg.diff().unwrap();
         assert_eq!(diff["changes"].as_array().unwrap().len(), 0);
@@ -867,7 +870,43 @@ mod tests {
     }
 
     #[test]
+    fn gene_validation_ok() {
+        compare_expected("gene_validation_ok");
+    }
+
+    #[test]
+    fn iso_form() {
+        compare_expected("iso_form");
+    }
+
+    #[test]
+    fn iso_form_lost() {
+        compare_expected("iso_form_lost");
+    }
+
+    #[test]
+    fn new_gene() {
+        compare_expected("new_gene");
+    }
+
+    #[test]
+    fn no_change() {
+        // There is actually a change here
+        compare_expected("no_change");
+    }
+
+    #[test]
+    fn no_change_isoforms() {
+        compare_expected("no_change_isoforms");
+    }
+
+    #[test]
     fn remove_exon() {
         compare_expected("remove_exon");
+    }
+
+    #[test]
+    fn utr_change() {
+        compare_expected("utr_change");
     }
 }

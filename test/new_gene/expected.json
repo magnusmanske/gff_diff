@@ -1,0 +1,859 @@
+{
+  "changes": [
+    {
+      "action": "remove",
+      "id": "CB0004",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "CB0004"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 700,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 600,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "GB0001",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "GB0001"
+          ],
+          "Name": [
+            "GeneB1"
+          ],
+          "status": [
+            "Finished"
+          ]
+        },
+        "end": 900,
+        "feature_type": "gene",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "EB0001",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "EB0001"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 100,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "MB0001",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "MB0001"
+          ],
+          "Name": [
+            "mRNAB1"
+          ],
+          "Parent": [
+            "GB0001"
+          ],
+          "status": [
+            "Finished"
+          ]
+        },
+        "end": 900,
+        "feature_type": "mRNA",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "CB0001",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "CB0001"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 100,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "CB0003",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "CB0003"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 500,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 400,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "CB0005",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "CB0005"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 900,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 800,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "EB0002",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "EB0002"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 300,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 200,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "CB0002",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "CB0002"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 300,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 200,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "EB0005",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "EB0005"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 900,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 800,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "EB0003",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "EB0003"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 500,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 400,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "remove",
+      "id": "EB0004",
+      "removed_element": {
+        "attributes": {
+          "ID": [
+            "EB0004"
+          ],
+          "Parent": [
+            "MB0001"
+          ]
+        },
+        "end": 700,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 600,
+        "strand": "+"
+      },
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0002"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 300,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 200,
+        "strand": "+"
+      },
+      "id": "E0002",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0001"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 100,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "id": "E0001",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0003"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 500,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 400,
+        "strand": "+"
+      },
+      "id": "C0003",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0005"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 900,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 800,
+        "strand": "+"
+      },
+      "id": "E0005",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0001"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 100,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "id": "C0001",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0004"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 700,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 600,
+        "strand": "+"
+      },
+      "id": "C0004",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0009"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1700,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1600,
+        "strand": "+"
+      },
+      "id": "E0009",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0007"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1300,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1200,
+        "strand": "+"
+      },
+      "id": "E0007",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0004"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 700,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 600,
+        "strand": "+"
+      },
+      "id": "E0004",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0002"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 300,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 200,
+        "strand": "+"
+      },
+      "id": "C0002",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "M0002"
+          ],
+          "Name": [
+            "mRNA2"
+          ],
+          "Parent": [
+            "G0002"
+          ],
+          "status": [
+            "Finished"
+          ]
+        },
+        "end": 1900,
+        "feature_type": "mRNA",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1000,
+        "strand": "+"
+      },
+      "id": "M0002",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0008"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1500,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1400,
+        "strand": "+"
+      },
+      "id": "E0008",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0006"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1100,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1000,
+        "strand": "+"
+      },
+      "id": "C0006",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0007"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1300,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1200,
+        "strand": "+"
+      },
+      "id": "C0007",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0008"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1500,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1400,
+        "strand": "+"
+      },
+      "id": "C0008",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "M0001"
+          ],
+          "Name": [
+            "mRNA1"
+          ],
+          "Parent": [
+            "G0001"
+          ],
+          "status": [
+            "Finished"
+          ]
+        },
+        "end": 900,
+        "feature_type": "mRNA",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "id": "M0001",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0005"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 900,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 800,
+        "strand": "+"
+      },
+      "id": "C0005",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0010"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1900,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1800,
+        "strand": "+"
+      },
+      "id": "E0010",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "G0002"
+          ],
+          "Name": [
+            "Gene2"
+          ],
+          "status": [
+            "Finished"
+          ]
+        },
+        "end": 1900,
+        "feature_type": "gene",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1000,
+        "strand": "+"
+      },
+      "id": "G0002",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "G0001"
+          ],
+          "Name": [
+            "Gene1"
+          ],
+          "status": [
+            "Finished"
+          ]
+        },
+        "end": 900,
+        "feature_type": "gene",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1,
+        "strand": "+"
+      },
+      "id": "G0001",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0006"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1100,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1000,
+        "strand": "+"
+      },
+      "id": "E0006",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0010"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1900,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1800,
+        "strand": "+"
+      },
+      "id": "C0010",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "E0003"
+          ],
+          "Parent": [
+            "M0001"
+          ]
+        },
+        "end": 500,
+        "feature_type": "exon",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 400,
+        "strand": "+"
+      },
+      "id": "E0003",
+      "what": "row"
+    },
+    {
+      "action": "add",
+      "added_element": {
+        "attributes": {
+          "ID": [
+            "C0009"
+          ],
+          "Parent": [
+            "M0002"
+          ]
+        },
+        "end": 1700,
+        "feature_type": "CDS",
+        "frame": ".",
+        "score": ".",
+        "seqname": "Scaffold0",
+        "source": ".",
+        "start": 1600,
+        "strand": "+"
+      },
+      "id": "C0009",
+      "what": "row"
+    }
+  ]
+}
