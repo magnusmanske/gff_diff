@@ -25,6 +25,7 @@ pub struct CompareGFF {
     data1: Option<HashGFF>,
     data2: Option<HashGFF>,
     record_issues: bool,
+    issues: Vec<String>,
 }
 
 impl CompareGFF {
@@ -34,6 +35,7 @@ impl CompareGFF {
             data1: None,
             data2: None,
             record_issues: false,
+            issues: vec![],
         }
     }
 
@@ -48,9 +50,28 @@ impl CompareGFF {
         filename2: S,
     ) -> Result<Self, Box<dyn Error>> {
         let mut ret = Self::new();
-        ret.data1 = Some(ret.read(Box::new(File::open(filename1.into())?))?);
-        ret.data2 = Some(ret.read(Box::new(File::open(filename2.into())?))?);
+        ret.load_gff(filename1, 1)?;
+        ret.load_gff(filename2, 2)?;
         Ok(ret)
+    }
+
+    pub fn load_gff<S: Into<String>>(
+        &mut self,
+        filename: S,
+        data_set: u8,
+    ) -> Result<(), Box<dyn Error>> {
+        let data = Some(self.read(Box::new(File::open(filename.into())?))?);
+        match data_set {
+            1 => self.data1 = data,
+            2 => self.data2 = data,
+            _ => {
+                return Err(From::from(format!(
+                    "Data set number not 1 or 2: {}",
+                    data_set
+                )))
+            }
+        }
+        Ok(())
     }
 
     /// Generates the diff between the two loaded files.
@@ -60,6 +81,9 @@ impl CompareGFF {
         });
         self.compare(CompareMode::Forward, &mut result)?;
         self.compare(CompareMode::Reverse, &mut result)?;
+        if self.record_issues {
+            result["issues"] = json!(self.issues);
+        }
         Ok(result)
     }
 
@@ -82,16 +106,30 @@ impl CompareGFF {
         self.compare_apollo()
     }
 
+    fn log_issue(&mut self, issue: String) {
+        if self.record_issues {
+            self.issues.push(issue);
+        } else {
+            eprintln!("{}", issue);
+        }
+    }
+
     /// Reads a file from a Reader into a HashGFF hash table.
-    fn read(&self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
+    fn read(&mut self, file: Box<dyn std::io::Read>) -> Result<HashGFF, Box<dyn Error>> {
         let mut reader = gff::Reader::new(file, gff::GffType::GFF3);
 
         //TODO check for double IDs?
+        let mut ids: HashSet<String> = HashSet::new();
         let ret: HashMap<String, bio::io::gff::Record> = reader
             .records()
             .filter_map(|element| {
                 let e = element.ok()?;
                 let id = e.attributes().get("ID")?.to_string();
+                if ids.contains(&id) {
+                    self.log_issue(format!("Double ID {}, not adding {:?}", &id, &e));
+                    return None;
+                }
+                ids.insert(id.clone());
                 Some((id, e))
             })
             .collect();
@@ -386,7 +424,7 @@ impl CompareGFF {
             (Some(data1), Some(data2)) => (data1, data2),
             _ => return Err(From::from(format!("Both GFF sets need to be initialized"))),
         };
-        let mut issues: Vec<String> = vec![];
+        let mut issues: Vec<String> = self.issues.clone();
         let mut changes: Vec<Value> = vec![];
 
         let _re = Regex::new(r"-\d+$").unwrap();
@@ -714,13 +752,16 @@ mod tests {
         let gff_file1 = format!("test/{}/core.gff", dir);
         let gff_file2 = format!("test/{}/cap.gff", dir);
         let expected_file = format!("test/{}/expected.json", dir);
-        let cg = CompareGFF::new_from_files(gff_file1, gff_file2).unwrap();
+        let mut cg = CompareGFF::new(); //_from_files(gff_file1, gff_file2).unwrap();
+        cg.record_issues(true);
+        cg.load_gff(gff_file1, 1).unwrap();
+        cg.load_gff(gff_file2, 2).unwrap();
         let mut diff = cg.diff().unwrap();
         let expected = fs::read_to_string(expected_file).unwrap();
         let mut expected: Value = serde_json::from_str(&expected).unwrap();
         CompareGFF::sort_comparison(&mut diff);
         CompareGFF::sort_comparison(&mut expected);
-        assert_eq!(diff, expected);
+        assert_eq!(diff["changes"], expected["changes"]);
     }
 
     #[test]
@@ -772,6 +813,17 @@ mod tests {
     #[test]
     fn gene_split() {
         compare_expected("gene_split");
+    }
+
+    #[test]
+    fn gene_validation_3exons_ok() {
+        // No change, actually
+        compare_expected("gene_validation_3exons_ok");
+    }
+
+    #[test]
+    fn gene_validation_no_start() {
+        compare_expected("gene_validation_no_start");
     }
 
     #[test]

@@ -1,0 +1,15 @@
+{
+  "changes": [
+    {
+      "action": "update",
+      "id": "55073bc2-cc7d-430d-81f3-fa683dcf7dbc",
+      "key": "start",
+      "value": "165",
+      "what": "row"
+    }
+  ],
+  "issues": [
+    "Double ID 55073bc2-cc7d-430d-81f3-fa683dcf7dbc, not adding Record { seqname: \"scf_1925491332\", source: \".\", feature_type: \"CDS\", start: 1238, end: 1567, score: \".\", strand: \"+\", frame: \"0\", attributes: {\"Name\": [\"55073bc2-cc7d-430d-81f3-fa683dcf7dbc-CDS\"], \"ID\": [\"55073bc2-cc7d-430d-81f3-fa683dcf7dbc\"], \"Parent\": [\"8cda19b5-47e0-42eb-8dd2-9377b326c947\"]} }",
+    "Double ID 55073bc2-cc7d-430d-81f3-fa683dcf7dbc, not adding Record { seqname: \"scf_1925491332\", source: \".\", feature_type: \"CDS\", start: 1238, end: 1567, score: \".\", strand: \"+\", frame: \"0\", attributes: {\"ID\": [\"55073bc2-cc7d-430d-81f3-fa683dcf7dbc\"], \"Parent\": [\"8cda19b5-47e0-42eb-8dd2-9377b326c947\"], \"Name\": [\"55073bc2-cc7d-430d-81f3-fa683dcf7dbc-CDS\"]} }"
+  ]
+}

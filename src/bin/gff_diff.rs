@@ -40,8 +40,10 @@ fn main() {
         return;
     }
 
-    let mut cg = CompareGFF::new_from_files(&files[0], &files[1]).unwrap();
+    let mut cg = CompareGFF::new(); //_from_files(&files[0], &files[1]).unwrap();
     cg.record_issues(do_record_issues);
+    cg.load_gff(&files[0], 1).unwrap();
+    cg.load_gff(&files[1], 2).unwrap();
     let diff = match apollo {
         true => cg.diff_apollo(),
         false => cg.diff(),
