@@ -1,0 +1,10 @@
+##gff-version 3
+##sequence-region 3L 1 41963435
+3L	.	gene	8101299	8103533	.	-	.	Name=AGAP010657-B-LAWSON;date_creation=2016-03-03;status=Finished annotating;owner=lawson@ebi.ac.uk;ID=2809cfc5-804b-4ac2-abff-d9bc3d230b2b;date_last_modified=2016-03-03
+3L	.	mRNA	8101299	8103533	.	-	.	Name=AGAP010657-B-LAWSON-00001;date_creation=2016-03-03;Parent=2809cfc5-804b-4ac2-abff-d9bc3d230b2b;status=Finished annotating;owner=lawson@ebi.ac.uk;ID=bfb524b3-b431-4758-b58d-da6315ef3597;date_last_modified=2016-03-03
+3L	.	exon	8103437	8103533	.	-	.	Name=2f48880f-08a3-4f0b-9b7b-ad7b6fd8f50c;Parent=bfb524b3-b431-4758-b58d-da6315ef3597;ID=2f48880f-08a3-4f0b-9b7b-ad7b6fd8f50c
+3L	.	exon	8101299	8103167	.	-	.	Name=af6e3138-aa37-45bf-89f3-d680dd4bb0b5-exon;Parent=bfb524b3-b431-4758-b58d-da6315ef3597;ID=af6e3138-aa37-45bf-89f3-d680dd4bb0b5
+3L	.	exon	8103243	8103370	.	-	.	Name=e0dcf240-85b6-45ee-a28f-2db9e47c5c89;Parent=bfb524b3-b431-4758-b58d-da6315ef3597;ID=e0dcf240-85b6-45ee-a28f-2db9e47c5c89
+3L	.	CDS	8103437	8103533	.	-	0	Name=bfb524b3-b431-4758-b58d-da6315ef3597-CDS;Parent=bfb524b3-b431-4758-b58d-da6315ef3597;ID=bfb524b3-b431-4758-b58d-da6315ef3597-CDS
+3L	.	CDS	8103243	8103370	.	-	2	Name=bfb524b3-b431-4758-b58d-da6315ef3597-CDS;Parent=bfb524b3-b431-4758-b58d-da6315ef3597;ID=bfb524b3-b431-4758-b58d-da6315ef3597-CDS
+3L	.	CDS	8101323	8103167	.	-	0	Name=bfb524b3-b431-4758-b58d-da6315ef3597-CDS;Parent=bfb524b3-b431-4758-b58d-da6315ef3597;ID=bfb524b3-b431-4758-b58d-da6315ef3597-CDS

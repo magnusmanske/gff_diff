@@ -1,0 +1,8 @@
+##gff-version 3
+scf_1925491332	.	gene	1	1667	.	+	.	ID=08135d5a-14fe-4f94-a37e-7ee7b4947bf3;Name=ACOM040087-LAWSON;date_creation=2016-02-10;status=Finished annotating;owner=lawson@ebi.ac.uk;date_last_modified=2016-02-10
+scf_1925491332	.	mRNA	1	1667	.	+	.	ID=8cda19b5-47e0-42eb-8dd2-9377b326c947;Parent=08135d5a-14fe-4f94-a37e-7ee7b4947bf3;Name=ACOM040087-LAWSON-00001;date_creation=2016-02-10;status=Finished annotating;owner=lawson@ebi.ac.uk;date_last_modified=2016-02-10
+scf_1925491332	.	exon	1	55	.	+	.	ID=f870a9e6-978f-451c-b2d0-d22eea10d212;Parent=8cda19b5-47e0-42eb-8dd2-9377b326c947;Name=f870a9e6-978f-451c-b2d0-d22eea10d212-exon
+scf_1925491332	.	exon	113	287	.	+	.	ID=e182603a-f699-4813-aa6e-ecbc3a192c3e;Parent=8cda19b5-47e0-42eb-8dd2-9377b326c947;Name=e182603a-f699-4813-aa6e-ecbc3a192c3e-exon
+scf_1925491332	.	CDS	165	287	.	+	0	ID=55073bc2-cc7d-430d-81f3-fa683dcf7dbc;Parent=8cda19b5-47e0-42eb-8dd2-9377b326c947;Name=55073bc2-cc7d-430d-81f3-fa683dcf7dbc-CDS
+scf_1925491332	.	CDS	1238	1567	.	+	0	ID=55073bc2-cc7d-430d-81f3-fa683dcf7dbc;Parent=8cda19b5-47e0-42eb-8dd2-9377b326c947;Name=55073bc2-cc7d-430d-81f3-fa683dcf7dbc-CDS
+scf_1925491332	.	exon	1238	1667	.	+	.	ID=fbd89e81-c42c-4f8b-8419-f16b0600df8a;Parent=8cda19b5-47e0-42eb-8dd2-9377b326c947;Name=fbd89e81-c42c-4f8b-8419-f16b0600df8a-exon

@@ -1,0 +1,23 @@
+##gff-version 3
+Scaffold0	.	gene	1	900	.	+	.	ID=G0001;Name=Gene1;status=Finished;
+Scaffold0	.	mRNA	1	900	.	+	.	ID=M0001;Name=mRNA1;Parent=G0001;status=Finished;
+Scaffold0	.	exon	1	100	.	+	.	ID=E0001;Parent=M0001;
+Scaffold0	.	exon	200	300	.	+	.	ID=E0002;Parent=M0001;
+Scaffold0	.	exon	400	500	.	+	.	ID=E0003;Parent=M0001;
+Scaffold0	.	exon	600	700	.	+	.	ID=E0004;Parent=M0001;
+Scaffold0	.	exon	800	900	.	+	.	ID=E0005;Parent=M0001;
+Scaffold0	.	CDS	1	100	.	+	.	ID=C0001;Parent=M0001;
+Scaffold0	.	CDS	200	300	.	+	.	ID=C0002;Parent=M0001;
+Scaffold0	.	CDS	400	500	.	+	.	ID=C0003;Parent=M0001;
+Scaffold0	.	CDS	600	700	.	+	.	ID=C0004;Parent=M0001;
+Scaffold0	.	CDS	800	900	.	+	.	ID=C0005;Parent=M0001;
+Scaffold0	.	exon	1000	1100	.	+	.	ID=E0006;Parent=M0001;
+Scaffold0	.	exon	1200	1300	.	+	.	ID=E0007;Parent=M0001;
+Scaffold0	.	exon	1400	1500	.	+	.	ID=E0008;Parent=M0001;
+Scaffold0	.	exon	1600	1700	.	+	.	ID=E0009;Parent=M0001;
+Scaffold0	.	exon	1800	1900	.	+	.	ID=E0010;Parent=M0001;
+Scaffold0	.	CDS	1000	1100	.	+	.	ID=C0006;Parent=M0001;
+Scaffold0	.	CDS	1200	1300	.	+	.	ID=C0007;Parent=M0001;
+Scaffold0	.	CDS	1400	1500	.	+	.	ID=C0008;Parent=M0001;
+Scaffold0	.	CDS	1600	1700	.	+	.	ID=C0009;Parent=M0001;
+Scaffold0	.	CDS	1800	1900	.	+	.	ID=C0010;Parent=M0001;

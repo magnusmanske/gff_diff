@@ -1,0 +1,13 @@
+##gff-version 3
+Scaffold0	.	gene	1	900	.	+	.	ID=GB0001;Name=GeneB1;status=Finished;
+Scaffold0	.	mRNA	1	900	.	+	.	ID=MB0001;Name=mRNAB1;Parent=GB0001;status=Finished;
+Scaffold0	.	exon	1	100	.	+	.	ID=EB0001;Parent=MB0001;
+Scaffold0	.	exon	200	300	.	+	.	ID=EB0002;Parent=MB0001;
+Scaffold0	.	exon	400	500	.	+	.	ID=EB0003;Parent=MB0001;
+Scaffold0	.	exon	600	700	.	+	.	ID=EB0004;Parent=MB0001;
+Scaffold0	.	exon	800	900	.	+	.	ID=EB0005;Parent=MB0001;
+Scaffold0	.	CDS	1	100	.	+	.	ID=CB0001;Parent=MB0001;
+Scaffold0	.	CDS	200	300	.	+	.	ID=CB0001;Parent=MB0001;
+Scaffold0	.	CDS	400	500	.	+	.	ID=CB0001;Parent=MB0001;
+Scaffold0	.	CDS	600	700	.	+	.	ID=CB0001;Parent=MB0001;
+Scaffold0	.	CDS	800	900	.	+	.	ID=CB0001;Parent=MB0001;
