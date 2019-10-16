@@ -12,6 +12,8 @@ getopts = "*"
 regex = "*"
 rayon = "*"
 ignore-result = "*"
+libflate = "*"
+lazy_static = "*"
 
 [profile.dev]
 opt-level = 3

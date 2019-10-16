@@ -1,9 +1,12 @@
 extern crate bio;
 #[macro_use]
 extern crate serde_json;
+#[macro_use]
+extern crate lazy_static;
 
 use bio::io::gff;
 use ignore_result::Ignore;
+use libflate::gzip::Decoder;
 use multimap::MultiMap;
 use rayon::prelude::*;
 use regex::Regex;
@@ -57,12 +60,32 @@ impl CompareGFF {
         Ok(ret)
     }
 
+    fn get_file_reader<S: Into<String>>(
+        filename: S,
+    ) -> Result<Box<dyn std::io::Read>, Box<dyn Error>> {
+        lazy_static! {
+            static ref RE_GZ: Regex =
+                Regex::new(r#"\.gz(ip){0,1}$"#).expect("new_from_files: RE_GZ does not compile");
+        }
+        let filename: String = filename.into();
+        if RE_GZ.is_match(&filename) {
+            let file_stream = File::open(filename)?;
+            let decoder = Decoder::new(file_stream)?;
+            Ok(Box::new(decoder))
+        } else {
+            let file_stream = File::open(filename)?;
+            Ok(Box::new(file_stream))
+        }
+    }
+
     pub fn load_gff<S: Into<String>>(
         &mut self,
         filename: S,
         data_set: u8,
     ) -> Result<(), Box<dyn Error>> {
-        let data = Some(self.read(Box::new(File::open(filename.into())?))?);
+        //let data = Some(self.read(Box::new(File::open(filename.into())?))?);
+        let reader = Self::get_file_reader(filename)?;
+        let data = Some(self.read(reader)?);
         match data_set {
             1 => self.data1 = data,
             2 => self.data2 = data,
