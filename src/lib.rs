@@ -49,6 +49,11 @@ impl CompareGFF {
         self.record_issues = do_record;
     }
 
+    /// Changes the option to create new IDs in case of duplicates.
+    pub fn flexible_ids(&mut self, use_flexible_ids: bool) {
+        self.flexible_ids = use_flexible_ids;
+    }
+
     /// Creates a new CompareGFF with two files.
     pub fn new_from_files<S: Into<String>>(
         filename1: S,
