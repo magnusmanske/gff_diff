@@ -7,7 +7,7 @@ description = "A tool to generate a diff (in JSON format) between two GFF3 files
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/magnusmanske/gff_diff"
 keywords = ["gff", "diff"]
-categories = ["Command line utilities","Science"]
+categories = ["command-line-utilities","science"]
 
 [dependencies]
 bio = "0.32"
