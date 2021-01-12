@@ -8,7 +8,7 @@ curl https://sh.rustup.rs -sSf | sh
 ```
 
 ## Compile the tool
-Use `git clone https://github.com/sanger-pathogens/gff_diff.git` to get the tool source, then use
+Use `git clone https://github.com/magnusmanske/gff_diff.git` to get the tool source, then use
 ```
 cargo build --release
 ```
